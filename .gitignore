@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+*.hdf5
+*.h5
+*.pkl
+scratch/
+
+# The GNN reference weights ARE committed -- 172 KB, and a baseline nobody can run is not a
+# baseline. The Ridge model.pkl is not: it is a pickle, and pickles from the internet are a
+# code-execution hazard, so participants refit it with baseline/train_features.py instead.
+baseline/*/model.pkl
+
+# Written by notebook 05 when it demonstrates building a submission.
+notebooks/my_submission/

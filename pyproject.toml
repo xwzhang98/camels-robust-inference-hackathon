@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kaai-hackathon"
+version = "0.3.0"
+description = "KAAI 2026 robust-inference hackathon: toolkit, baselines and scorer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+# Deliberately small. Everything here is already in a stock Colab runtime, so
+# `pip install git+...` is fast and cannot break a working environment.
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "h5py>=3.8",
+    "scikit-learn>=1.2",
+    "torch>=2.0",
+]
+
+[project.urls]
+Repository = "https://github.com/xwzhang98/kaai-robust-inference-hackathon-2026"
+
+[tool.setuptools]
+packages = ["kaai_hackathon"]
