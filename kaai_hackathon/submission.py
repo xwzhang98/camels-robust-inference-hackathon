@@ -9,6 +9,16 @@ exposing two functions::
 ``load_model`` is called once; ``predict`` is called once per test catalog. Anything
 expensive -- unpickling, moving weights to the GPU -- belongs in ``load_model``.
 
+A submission is a whole directory, not one file. `predict.py` may import its neighbours --
+`gnn.py`, a dataloader, whatever it needs -- so the directory goes on `sys.path` and stays
+there, because an import inside `predict()` has to work too, not only the ones at the top.
+
+That has a consequence worth knowing: **score one submission per process.** Two teams whose
+helper modules share a name would otherwise get each other's, since `sys.modules` is keyed
+by module name and the first one loaded wins. `predict.py` itself is safe -- it is
+registered under a name derived from its directory -- but `gnn.py` is not, and the failure
+would be silent. The evaluation driver runs a separate process per team for this reason.
+
 Predictions may additionally carry the four feedback parameters for the bonus track. Any
 other key is ignored rather than rejected, so a team can return debug information without
 failing the harness.
@@ -40,6 +50,11 @@ def load_submission(sub_dir: str | Path) -> tuple[object, Callable]:
     entry = sub_dir / "predict.py"
     if not entry.is_file():
         raise FileNotFoundError(f"submission is missing predict.py: {entry}")
+
+    # The submission's own directory comes first, so `import gnn` finds the team's gnn.py
+    # rather than anything of ours or the environment's that happens to share the name.
+    if str(sub_dir) not in sys.path:
+        sys.path.insert(0, str(sub_dir))
 
     module_name = f"kaai_hackathon_submission_{abs(hash(str(sub_dir))):x}"
     spec = importlib.util.spec_from_file_location(module_name, entry)
