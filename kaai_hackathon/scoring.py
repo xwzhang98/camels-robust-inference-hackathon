@@ -35,6 +35,35 @@ def r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return 1.0 - residual / total
 
 
+def pearson_r(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Pearson correlation between truth and prediction.
+
+    Reported alongside R^2 because they answer different questions. R^2 asks whether the
+    predictions are *right*; r asks whether they are right *in order*. A model that has
+    learned the trend on an unseen simulation code but is systematically offset or
+    compressed can have a badly negative R^2 and a high r -- and that is a real, useful
+    result rather than a failure, which is why the final score gives r its own weight on
+    the out-of-distribution suite.
+    """
+    y_true = np.asarray(y_true, dtype=np.float64)
+    y_pred = np.asarray(y_pred, dtype=np.float64)
+    if y_true.shape != y_pred.shape:
+        raise ValueError(f"shape mismatch: {y_true.shape} vs {y_pred.shape}")
+    if y_true.size < 2:
+        raise ValueError("need at least two points for a correlation")
+    if y_true.std() == 0.0 or y_pred.std() == 0.0:
+        # A constant prediction has no correlation with anything. Zero, not NaN: a model
+        # that always answers 0.3 should score nothing here, not poison the average.
+        return 0.0
+    return float(np.corrcoef(y_true, y_pred)[0, 1])
+
+
+def correlation_condition(preds: dict, truths: dict, targets: tuple[str, ...]) -> dict:
+    """``-> {target: pearson r}`` for one condition on one suite."""
+    return {t: pearson_r(truths[t], preds[t]) for t in targets
+            if t in truths and t in preds}
+
+
 def score_condition(preds: dict, truths: dict, targets: tuple[str, ...]) -> dict:
     """``-> {target: R^2}`` for one condition on one suite."""
     return {t: r2(truths[t], preds[t]) for t in targets if t in truths and t in preds}
